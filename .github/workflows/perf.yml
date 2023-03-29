@@ -148,7 +148,7 @@ jobs:
         echo ::set-output name=suites::"$suites"
         echo ::set-output name=tags::"$tags"
 
-    - uses: xt0rted/pull-request-comment-branch@v1
+    - uses: xt0rted/pull-request-comment-branch@v2
       id: comment-branch
       if: github.event_name == 'issue_comment' && github.event.action == 'created'
 
