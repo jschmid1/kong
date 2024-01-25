@@ -127,10 +127,12 @@ function DB.new(kong_config, strategy)
     -- load DAOs
 
     for _, schema in pairs(schemas) do
+
       local strategy = strategies[schema.name]
       if not strategy then
         return nil, fmt("no strategy found for schema '%s'", schema.name)
       end
+
       daos[schema.name] = DAO.new(self, schema, strategy, errors)
     end
   end

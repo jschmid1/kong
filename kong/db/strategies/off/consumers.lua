@@ -7,7 +7,6 @@ local Consumers = {}
 
 function Consumers:select(id)
   -- Retrieve a consumer by id from the admin api :8001/consumers/:id
-  -- Define the API endpoint
   local c = http.new()
 
   id = id.id or id

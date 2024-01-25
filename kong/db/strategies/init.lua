@@ -53,11 +53,12 @@ function _M.new(kong_config, database, schemas, errors)
     if not strategy then
       return nil, nil, err
     end
-    print("schema.name = " .. require("inspect")(schema.name))
 
     local custom_strat = fmt("kong.db.strategies.%s.%s", database, schema.name)
     local exists, mod = load_module_if_exists(custom_strat)
     if exists and mod then
+      -- print("schema = " .. require("inspect")(schema))
+      -- print("schema.name = " .. require("inspect")(schema.name))
       print("exists = " .. require("inspect")(exists))
       print("mod = " .. require("inspect")(mod))
       local parent_mt = getmetatable(strategy)

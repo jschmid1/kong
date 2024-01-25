@@ -7,7 +7,7 @@ local KeyauthCredentials = {}
 
 function KeyauthCredentials:select(id)
   -- Retrieve a key-auth credential by id from the admin api :8001/key-auths/:id
-  -- Define the API endpoint
+  print("XXX: id= " .. require("inspect")(id))
   local c = http.new()
 
   print("XXXXXXXXX: id = " .. require("inspect")(id))
@@ -32,6 +32,11 @@ function KeyauthCredentials:select(id)
   print("res = " .. require("inspect")(res))
 
   return res
+end
+
+function KeyauthCredentials:select_by_key(xx)
+  print("XXXXXX: xx = " .. require("inspect")(xx))
+  return nil, "not implemented"
 end
 
 return KeyauthCredentials

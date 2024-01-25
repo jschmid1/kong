@@ -221,7 +221,6 @@ end
 
 
 local function select_by_key(schema, key)
-  print("key = " .. require("inspect")(key))
   local entity, err = unmarshall(lmdb_get(key))
   if not entity then
     return nil, err

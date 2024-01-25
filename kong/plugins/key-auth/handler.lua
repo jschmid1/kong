@@ -1,6 +1,9 @@
 local constants = require "kong.constants"
 local kong_meta = require "kong.meta"
 
+local http      = require "resty.http"
+local cjson    = require "cjson.safe"
+
 
 local kong = kong
 local type = type
@@ -36,10 +39,29 @@ local ERR_UNEXPECTED          = { status = 500, message = "An unexpected error o
 
 
 local function load_credential(key)
-  local cred, err = kong.db.keyauth_credentials:select_by_key(key)
-  if not cred then
+  -- XXX: HACK
+  -- Something is off with overloading of the select function in non-core daos.
+  -- local cred, err = kong.db.keyauth_credentials:select_by_key(key)
+
+  local c = http.new()
+
+  local url = "http://localhost:8001/key-auths/" .. key
+
+  local response, err = c:request_uri(url, {
+    method = "GET",
+    headers = {
+      ["Content-Type"] = "application/json",
+    },
+  })
+  if err then
     return nil, err
   end
+
+  local cred = cjson.decode(response.body)
+  print("cred = " .. require("inspect")(cred))
+
+  -- XXX: For whatever reason, this forces the function to return? Why?
+  -- print("kong.db.keyauth_credentials = " .. require("inspect")(kong.db.keyauth_credentials:select("xxx")))
 
   if cred.ttl == 0 then
     kong.log.debug("key expired")
