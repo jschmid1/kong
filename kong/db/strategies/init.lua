@@ -53,10 +53,13 @@ function _M.new(kong_config, database, schemas, errors)
     if not strategy then
       return nil, nil, err
     end
+    print("schema.name = " .. require("inspect")(schema.name))
 
     local custom_strat = fmt("kong.db.strategies.%s.%s", database, schema.name)
     local exists, mod = load_module_if_exists(custom_strat)
     if exists and mod then
+      print("exists = " .. require("inspect")(exists))
+      print("mod = " .. require("inspect")(mod))
       local parent_mt = getmetatable(strategy)
       local mt = {
         __index = function(t, k)
@@ -75,7 +78,6 @@ function _M.new(kong_config, database, schemas, errors)
           return parent_mt[k]
         end
       }
-
       setmetatable(strategy, mt)
     end
 
@@ -87,4 +89,3 @@ end
 
 
 return _M
-

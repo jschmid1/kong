@@ -83,6 +83,24 @@ function DB.new(kong_config, strategy)
         end
       end
     end
+
+
+    -- XXX: HACK
+    local entity_name = "key-auth"
+    local key_auth_schema = require("kong.plugins.key-auth.daos")[1]
+    local ok, err_t = MetaSchema:validate(key_auth_schema)
+    if not ok then
+      return nil, fmt("schema of entity '%s' is invalid: %s", entity_name,
+                      tostring(errors:schema_violation(err_t)))
+    end
+    local entity, err = Entity.new(key_auth_schema)
+    if not entity then
+      return nil, fmt("schema of entity '%s' is invalid: %s", entity_name,
+                      err)
+    end
+    schemas[entity_name] = entity
+    -- XXX: HACK END
+
   end
 
   -- load strategy
