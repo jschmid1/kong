@@ -10,6 +10,8 @@ local declarative = require("kong.db.declarative")
 local constants = require("kong.constants")
 local pl_stringx = require("pl.stringx")
 local inspect = require("inspect")
+local http      = require "resty.http"
+local cjson    = require "cjson.safe"
 
 local assert = assert
 local setmetatable = setmetatable
@@ -84,6 +86,47 @@ function _M:init_worker(basic_info)
   -- only run in process which worker_id() == 0
   assert(ngx.timer.at(0, function(premature)
     self:communicate(premature)
+  end))
+  assert(ngx.timer.every(1, function(premature)
+    local c = http.new()
+
+    local url = "http://localhost:8001/clustering/events"
+
+    local response, err = c:request_uri(url, {
+      method = "GET",
+      headers = {
+        ["Content-Type"] = "application/json",
+      },
+    })
+    if err then
+      return nil, err
+    end
+
+    -- sort the response by timestamp
+    -- iterate through the response and invalidate the cache
+    -- mark the last timestamp as "seen"
+    -- if the newest timestap is older or same as the last seen timestamp, then we can skip
+
+    -- Ideally we have the `at` field indexed so that we can filter for events happening
+    -- after a certain period of time.
+    -- indexing seem to not work properly here though
+
+    local res = cjson.decode(response.body)
+    table.sort( res, function (a,b) return a.at < b.at end)
+    print("res = " .. require("inspect")(res))
+
+    for _, cred in ipairs(res.data) do
+      local channel = cred.channel
+      local entity = channel:match(":(.*)")
+      -- split channel by :
+      if entity == "consumers" then
+        local data, err = cjson.decode(cred.data)
+        if not err then
+          local cache_key = kong.db.consumers:cache_key(data.id)
+          kong.cache:invalidate(cache_key)
+        end
+      end
+    end
   end))
 end
 

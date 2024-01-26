@@ -3,6 +3,7 @@ local utils        = require "kong.tools.utils"
 local arguments    = require "kong.api.arguments"
 local workspaces   = require "kong.workspaces"
 local app_helpers  = require "lapis.application"
+local cjson        = require "cjson"
 
 
 local kong         = kong
@@ -198,7 +199,7 @@ end
 local function query_entity(context, self, db, schema, method)
   local is_insert = context == "insert"
   local is_update = context == "update" or context == "upsert"
-
+  local is_delete = context == "delete"
   local args
   if is_update or is_insert then
     args = self.args.post
@@ -663,7 +664,7 @@ end
 -- /services/:services
 -- /services/:services/routes/:routes
 local function delete_entity_endpoint(schema, foreign_schema, foreign_field_name, method, is_foreign_entity_endpoint)
-  return not foreign_schema and  function(self, db, helpers)
+  return not foreign_schema and function(self, db, helpers)
     local _, _, err_t = delete_entity(self, db, schema, method)
     if err_t then
       return handle_error(err_t)

@@ -50,8 +50,6 @@ local function handle_dao_crud_event(data)
   cluster_events:broadcast("clustering:push_config", data.schema.name .. ":" .. data.operation)
 
   -- broadcasting inserts a row into the cluster_events table in the database
-  cluster_events:broadcast("clustering:whatever", data.schema.name .. ":" .. data.operation)
-
   -- we have to re-broadcast event using `post` because the dao
   -- events were sent using `post_local` which means not all workers
   -- can receive it

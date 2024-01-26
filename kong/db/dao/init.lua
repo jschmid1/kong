@@ -1477,6 +1477,11 @@ function DAO:post_crud_event(operation, entity, old_entity, options)
       old_entity_without_nulls = remove_nulls(utils.cycle_aware_deep_copy(old_entity, true))
     end
 
+    -- on any event, we broadcast the event to the cluster
+    -- so that the DPs can consume it
+    local broadcast_data = entity_without_nulls
+    broadcast_data["operation"] = operation
+    kong.cluster_events:broadcast(fmt("clustering:%s", self.schema.name), cjson.encode(entity_without_nulls))
     local ok, err = self.events.post_local("dao:crud", operation, {
       operation  = operation,
       schema     = self.schema,
