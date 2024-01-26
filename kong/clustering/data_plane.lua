@@ -67,6 +67,7 @@ function _M.new(clustering)
     conf = clustering.conf,
     cert = clustering.cert,
     cert_key = clustering.cert_key,
+    events_shm = ngx.shared.kong_cluster_events,
 
     -- in konnect_mode, reconfigure errors will be reported to the control plane
     -- via WebSocket message
@@ -111,21 +112,47 @@ function _M:init_worker(basic_info)
     -- after a certain period of time.
     -- indexing seem to not work properly here though
 
+    -- The even more right way is to hook into kong.cluster_events and
+    -- reuse polling and subscription mechanisms
+    -- where we poll for events and invalidate the cache while
+    -- reusing the tracking with self.events_shm:set(row.id)
+
+    -- but this is a POC after all
     local res = cjson.decode(response.body)
     table.sort( res, function (a,b) return a.at < b.at end)
-    print("res = " .. require("inspect")(res))
 
-    for _, cred in ipairs(res.data) do
-      local channel = cred.channel
-      local entity = channel:match(":(.*)")
+    for _, event in ipairs(res.data) do
+      local channel = event.channel
       -- split channel by :
+      local entity = channel:match(":(.*)")
+      -- check if seen
+      local seen, err = self.events_shm:get(event.id)
+      if seen then
+        goto continue
+      end
+      print("entity = " .. require("inspect")(entity))
+      print("seen = " .. require("inspect")(seen))
       if entity == "consumers" then
-        local data, err = cjson.decode(cred.data)
+        local payload, err = cjson.decode(event.data)
         if not err then
-          local cache_key = kong.db.consumers:cache_key(data.id)
+          local cache_key = kong.db.consumers:cache_key(payload.id)
           kong.cache:invalidate(cache_key)
+          print(string.format("cache of consumer %s invalidated", payload.username))
+          -- mark as seen
+          local ok, err = self.events_shm:set(event.id, true, self.event_ttl_shm)
+          print("ok = " .. require("inspect")(ok))
+          if not ok then
+            return nil, "failed to mark event as ran: " .. err
+          end
+        end
+      else
+        print("pretend we have seen this event")
+        local ok, err = self.events_shm:set(event.id, true, self.event_ttl_shm)
+        if not ok then
+          return nil, "failed to mark event as ran: " .. err
         end
       end
+      ::continue::
     end
   end))
 end
