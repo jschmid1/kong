@@ -162,8 +162,8 @@ function _M:broadcast(channel, data, delay)
 
   -- insert event row
 
-  --log(DEBUG, "broadcasting on channel: '", channel, "' data: ", data,
-  --           " with delay: ", delay and delay or "none")
+  log(DEBUG, "broadcasting on channel: '", channel, "' data: ", data,
+            " with delay: ", delay and delay or "none")
 
   local ok, err = self.strategy:insert(self.node_id, channel, nil, data, delay)
   if not ok then
@@ -175,6 +175,8 @@ end
 
 
 function _M:subscribe(channel, cb, start_polling)
+  print("channel = " .. require("inspect")(channel))
+  log(DEBUG, require("inspect")(channel))
   if type(channel) ~= "string" then
     return error("channel must be a string")
   end
@@ -212,6 +214,7 @@ end
 
 
 local function process_event(self, row, local_start_time)
+  log(DEBUG, require("inspect")(row.data))
   if row.node_id == self.node_id then
     return true
   end

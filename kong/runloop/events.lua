@@ -278,6 +278,7 @@ end
 
 
 local function crud_consumers_handler(data)
+  print("data = " .. require("inspect")(data))
   workspaces.set_workspace(data.workspace)
 
   local old_entity = data.old_entity

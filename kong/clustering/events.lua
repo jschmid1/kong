@@ -26,6 +26,7 @@ local worker_events
 -- Sends "clustering", "push_config" to all workers in the same node, including self
 local function post_push_config_event()
   local res, err = worker_events.post("clustering", "push_config")
+  local res, err = worker_events.post("crud", "consumers")
   if not res then
     ngx_log(ngx_ERR, _log_prefix, "unable to broadcast event: ", err)
   end
@@ -41,11 +42,15 @@ end
 
 -- Handles "dao:crud" worker event and broadcasts "clustering:push_config" cluster event
 local function handle_dao_crud_event(data)
+  ngx_log(ngx_DEBUG, _log_prefix, "YYYYYYYYYYYYYYY", data.schema.name)
   if type(data) ~= "table" or data.schema == nil or data.schema.db_export == false then
     return
   end
 
   cluster_events:broadcast("clustering:push_config", data.schema.name .. ":" .. data.operation)
+
+  -- broadcasting inserts a row into the cluster_events table in the database
+  cluster_events:broadcast("clustering:whatever", data.schema.name .. ":" .. data.operation)
 
   -- we have to re-broadcast event using `post` because the dao
   -- events were sent using `post_local` which means not all workers
@@ -53,6 +58,10 @@ local function handle_dao_crud_event(data)
   post_push_config_event()
 end
 
+
+local function handle_mock_event(data)
+  ngx_log(ngx_DEBUG, _log_prefix, "XXXXXXXXXXXXXXXX", data)
+end
 
 local function init()
   cluster_events = assert(kong.cluster_events)
@@ -63,6 +72,7 @@ local function init()
   -- this callback. This makes such node post push_config events to all the cp workers on
   -- its node
   cluster_events:subscribe("clustering:push_config", handle_clustering_push_config_event)
+  cluster_events:subscribe("dao:crud", handle_mock_event)
 
   -- The "dao:crud" event is triggered using post_local, which eventually generates an
   -- ""clustering:push_config" cluster event. It is assumed that the workers in the
@@ -71,6 +81,7 @@ local function init()
   -- kong node where the event originated will need to be notified so they push config to
   -- their data planes
   worker_events.register(handle_dao_crud_event, "dao:crud")
+  -- worker_events.register(handle_mock_event, "dao:crud")
 end
 
 
