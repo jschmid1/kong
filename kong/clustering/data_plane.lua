@@ -130,23 +130,28 @@ function _M:init_worker(basic_info)
       if seen then
         goto continue
       end
+      if entity == "clustering_data_planes" or entity == "push_config" then
+        goto continue
+      end
       print("entity = " .. require("inspect")(entity))
       print("seen = " .. require("inspect")(seen))
+      -- TODO: also handle other entities
+      -- also move this out to a separate handler function
+      -- Ideally this is done via events.
       if entity == "consumers" then
         local payload, err = cjson.decode(event.data)
         if not err then
           local cache_key = kong.db.consumers:cache_key(payload.id)
           kong.cache:invalidate(cache_key)
-          print(string.format("cache of consumer %s invalidated", payload.username))
+          print(string.format("XXX: cache of consumer %s invalidated", payload.username))
           -- mark as seen
           local ok, err = self.events_shm:set(event.id, true, self.event_ttl_shm)
-          print("ok = " .. require("inspect")(ok))
           if not ok then
             return nil, "failed to mark event as ran: " .. err
           end
         end
       else
-        print("pretend we have seen this event")
+        print("XXX: pretend we have seen this event")
         local ok, err = self.events_shm:set(event.id, true, self.event_ttl_shm)
         if not ok then
           return nil, "failed to mark event as ran: " .. err

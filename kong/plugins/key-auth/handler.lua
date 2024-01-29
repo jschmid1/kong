@@ -58,7 +58,6 @@ local function load_credential(key)
   end
 
   local cred = cjson.decode(response.body)
-  print("cred = " .. require("inspect")(cred))
 
   -- XXX: For whatever reason, this forces the function to return? Why?
   -- print("kong.db.keyauth_credentials = " .. require("inspect")(kong.db.keyauth_credentials:select("xxx")))
@@ -68,6 +67,7 @@ local function load_credential(key)
 
     return nil
   end
+  print("XXX: FETCHING KEYAUTH CREDENTIAL FROM CP")
 
   return cred, nil, cred.ttl
 end

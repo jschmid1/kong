@@ -1481,6 +1481,16 @@ function DAO:post_crud_event(operation, entity, old_entity, options)
     -- so that the DPs can consume it
     local broadcast_data = entity_without_nulls
     broadcast_data["operation"] = operation
+    --[[
+      -[ RECORD 1 ]-----------------------------------
+      id        | f9562282-f55c-4e65-a624-d765846ea477
+      node_id   | fd6448bc-3224-4a64-9e0f-9aa72eecd3ba
+      at        | 2024-01-25 16:56:23.99+00
+      nbf       |
+      expire_at | 2024-01-25 17:56:23.99+00
+      channel   | clustering:consumers
+      data      | '{"operation": "delete", "id": "f9562282-f55c-4e65-a624-d765846ea477"}'
+    --]]
     kong.cluster_events:broadcast(fmt("clustering:%s", self.schema.name), cjson.encode(entity_without_nulls))
     local ok, err = self.events.post_local("dao:crud", operation, {
       operation  = operation,
