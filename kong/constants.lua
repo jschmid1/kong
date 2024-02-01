@@ -150,7 +150,9 @@ local constants = {
     "filter_chains",
   },
   ENTITY_CACHE_STORE = setmetatable({
-    consumers = "cache",
+    -- take consumers out of core-cache/cache
+    -- TODO: find out what this actually does
+    -- consumers = "consumers_cache",
     certificates = "core_cache",
     services = "core_cache",
     routes = "core_cache",

@@ -128,9 +128,7 @@ function _M:init_worker(basic_info)
       -- check if seen
       local seen, err = self.events_shm:get(event.id)
       if seen then
-        goto continue
-      end
-      if entity == "clustering_data_planes" or entity == "push_config" then
+        -- print("XXX: skipping seen events")
         goto continue
       end
       print("entity = " .. require("inspect")(entity))
@@ -141,14 +139,31 @@ function _M:init_worker(basic_info)
       if entity == "consumers" then
         local payload, err = cjson.decode(event.data)
         if not err then
-          local cache_key = kong.db.consumers:cache_key(payload.id)
-          kong.cache:invalidate(cache_key)
+          -- setting the cache_key this way is a little odd. During runtime the `cache_key` method
+          -- accesses request context and populates the ws_id. But here we are not in a request context
+          -- The main concern is that we can't prevent developers from using all the args (here nil),
+          -- to construct a cache_key. If they do, we don't properly invalidate the cache.
+          local cache_key = kong.db.consumers:cache_key(payload.id, nil, nil, nil, nil, payload.ws_id)
+          kong.consumers_cache:invalidate(cache_key)
           print(string.format("XXX: cache of consumer %s invalidated", payload.username))
           -- mark as seen
           local ok, err = self.events_shm:set(event.id, true, self.event_ttl_shm)
           if not ok then
             return nil, "failed to mark event as ran: " .. err
           end
+        end
+      elseif entity == "keyauth_credentials" then
+        local payload, err = cjson.decode(event.data)
+        if err then
+          print("err = " .. require("inspect")(err))
+        end
+        local cache_key = kong.db.keyauth_credentials:cache_key(payload.key, nil, nil, nil, nil, payload.ws_id)
+        kong.credentials_cache:invalidate(cache_key)
+        -- kong.credentials_cache:delete(cache_key)
+        print(string.format("XXX: cache of KEYAUTH-CREDENTIALS %s invalidated", payload.key))
+        local ok, err = self.events_shm:set(event.id, true, self.event_ttl_shm)
+        if not ok then
+          return nil, "failed to mark event as ran: " .. err
         end
       else
         print("XXX: pretend we have seen this event")

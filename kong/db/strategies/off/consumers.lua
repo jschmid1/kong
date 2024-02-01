@@ -28,6 +28,7 @@ function Consumers:select(id)
 
   local res = cjson.decode(response.body)
   print("XXX: FETCHING CONSUMER FROM CP")
+  print("res = " .. require("inspect")(res))
 
   return res
 end

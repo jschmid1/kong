@@ -5,6 +5,7 @@ return {
   primary_key   = { "id" },
   endpoint_key  = "username",
   workspaceable = true,
+  db_export = false,
 
   fields        = {
     { id = typedefs.uuid, },

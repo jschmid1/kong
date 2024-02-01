@@ -20,6 +20,8 @@ lua_shared_dict stream_kong_cluster_events         5m;
 lua_shared_dict stream_kong_rate_limiting_counters 12m;
 lua_shared_dict stream_kong_core_db_cache          ${{MEM_CACHE_SIZE}};
 lua_shared_dict stream_kong_core_db_cache_miss     12m;
+lua_shared_dict stream_kong_consumers_db_cache     ${{MEM_CACHE_SIZE}};
+lua_shared_dict stream_kong_consumers_db_cache_miss 12m;
 lua_shared_dict stream_kong_db_cache               ${{MEM_CACHE_SIZE}};
 lua_shared_dict stream_kong_db_cache_miss          12m;
 lua_shared_dict stream_kong_secrets                5m;

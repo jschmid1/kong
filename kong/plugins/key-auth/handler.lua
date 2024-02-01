@@ -68,6 +68,10 @@ local function load_credential(key)
     return nil
   end
   print("XXX: FETCHING KEYAUTH CREDENTIAL FROM CP")
+  -- Leave this until we moved to tcp coms
+  if cred.message == "Not found" then
+    return nil, nil
+  end
 
   return cred, nil, cred.ttl
 end
@@ -194,11 +198,12 @@ local function do_authentication(conf)
 
   -- retrieve our consumer linked to this API key
 
-  local cache = kong.cache
+  -- local cache = kong.cache
 
   local credential_cache_key = kong.db.keyauth_credentials:cache_key(key)
   -- hit_level be 1 if stale value is propelled into L1 cache; so set a minimal `resurrect_ttl`
-  local credential, err, hit_level = cache:get(credential_cache_key, { resurrect_ttl = 0.001 }, load_credential,
+  print("XXX: credential_cache_key = " .. require("inspect")(credential_cache_key))
+  local credential, err, hit_level = kong.credentials_cache:get(credential_cache_key, { resurrect_ttl = 0.001 }, load_credential,
                                     key)
 
   if err then
@@ -220,7 +225,7 @@ local function do_authentication(conf)
   -- retrieve the consumer linked to this API key, to set appropriate headers
   local consumer_cache_key, consumer
   consumer_cache_key = kong.db.consumers:cache_key(credential.consumer.id)
-  consumer, err      = cache:get(consumer_cache_key, nil,
+  consumer, err      = kong.consumers_cache:get(consumer_cache_key, nil,
                                  kong.client.load_consumer,
                                  credential.consumer.id)
   if err then
@@ -251,7 +256,8 @@ function KeyAuthHandler:access(conf)
     if conf.anonymous then
       -- get anonymous user
       local consumer_cache_key = kong.db.consumers:cache_key(conf.anonymous)
-      local consumer, err = kong.cache:get(consumer_cache_key, nil,
+      print("XXXX: consumer_cache_key = " .. require("inspect")(consumer_cache_key))
+      local consumer, err = kong.consumer_cache:get(consumer_cache_key, nil,
                                            kong.client.load_consumer,
                                            conf.anonymous, true)
       if err then

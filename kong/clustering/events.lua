@@ -41,7 +41,7 @@ end
 
 -- Handles "dao:crud" worker event and broadcasts "clustering:push_config" cluster event
 local function handle_dao_crud_event(data)
-  print("XXX: data = " .. require("inspect")(data))
+  -- db_export -> false already stops the entity invalidation
   if type(data) ~= "table" or data.schema == nil or data.schema.db_export == false then
     return
   end

@@ -10,6 +10,7 @@ return {
     workspaceable = true,
     admin_api_name = "key-auths",
     admin_api_nested_name = "key-auth",
+    db_export = false,
     fields = {
       { id = typedefs.uuid },
       { created_at = typedefs.auto_timestamp_s },
@@ -19,4 +20,3 @@ return {
     },
   },
 }
-

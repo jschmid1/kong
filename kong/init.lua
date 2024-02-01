@@ -853,6 +853,23 @@ function Kong.init_worker()
   end
   kong.core_cache = core_cache
 
+  local consumers_cache, err = kong_global.init_consumers_cache(kong.configuration, cluster_events, worker_events)
+  if not consumers_cache then
+    stash_init_worker_error("failed to instantiate 'kong.consumers_cache' module: " ..
+                            err)
+    return
+  end
+  kong.consumers_cache = consumers_cache
+
+  local credentials_cache, err = kong_global.init_credentials_cache(kong.configuration, cluster_events, worker_events)
+  if not credentials_cache then
+    stash_init_worker_error("failed to instantiate 'kong.credentials_cache' module: " ..
+                            err)
+    return
+  end
+  kong.credentials_cache = credentials_cache
+
+
   kong.db:set_events_handler(worker_events)
 
   if kong.configuration.admin_gui_listeners then
