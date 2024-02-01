@@ -171,9 +171,6 @@ end
 
 
 local function dao_crud_handler(data)
-  local ok, err = cluster_events:broadcast("crud:xxx", data)
-  log(ERR, "[eventsXXX] ok", ok)
-  log(ERR, "[eventsXXX] err", err)
   local schema = data.schema
   if not schema then
     log(ERR, "[events] missing schema in crud subscriber")
@@ -281,7 +278,6 @@ end
 
 
 local function crud_consumers_handler(data)
-  log(DEBUG, "[events] Consumer updated, invalidating cached consumerXXX ")
   workspaces.set_workspace(data.workspace)
 
   local old_entity = data.old_entity

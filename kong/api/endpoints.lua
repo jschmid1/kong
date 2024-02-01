@@ -3,7 +3,6 @@ local utils        = require "kong.tools.utils"
 local arguments    = require "kong.api.arguments"
 local workspaces   = require "kong.workspaces"
 local app_helpers  = require "lapis.application"
-local cjson        = require "cjson"
 
 
 local kong         = kong
@@ -200,7 +199,6 @@ end
 local function query_entity(context, self, db, schema, method)
   local is_insert = context == "insert"
   local is_update = context == "update" or context == "upsert"
-  local is_delete = context == "delete"
   local args
   if is_update or is_insert then
     args = self.args.post
