@@ -136,13 +136,17 @@ function _M:init_worker(basic_info)
       -- TODO: also handle other entities
       -- also move this out to a separate handler function
       -- Ideally this is done via events.
+
+      -- TODO: probably don't invalidate on `event.operation == "create"``
       if entity == "consumers" then
+
         local payload, err = cjson.decode(event.data)
         if not err then
           -- setting the cache_key this way is a little odd. During runtime the `cache_key` method
           -- accesses request context and populates the ws_id. But here we are not in a request context
           -- The main concern is that we can't prevent developers from using all the args (here nil),
           -- to construct a cache_key. If they do, we don't properly invalidate the cache.
+          print("payload = " .. require("inspect")(payload))
           local cache_key = kong.db.consumers:cache_key(payload.id, nil, nil, nil, nil, payload.ws_id)
           kong.consumers_cache:invalidate(cache_key)
           print(string.format("XXX: cache of consumer %s invalidated", payload.username))
@@ -157,6 +161,7 @@ function _M:init_worker(basic_info)
         if err then
           print("err = " .. require("inspect")(err))
         end
+        print("payload = " .. require("inspect")(payload))
         local cache_key = kong.db.keyauth_credentials:cache_key(payload.key, nil, nil, nil, nil, payload.ws_id)
         kong.credentials_cache:invalidate(cache_key)
         -- kong.credentials_cache:delete(cache_key)

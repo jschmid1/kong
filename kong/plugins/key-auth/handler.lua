@@ -70,7 +70,19 @@ local function load_credential(key)
   print("XXX: FETCHING KEYAUTH CREDENTIAL FROM CP")
   -- Leave this until we moved to tcp coms
   if cred.message == "Not found" then
-    return nil, nil
+    -- FIXME: -1 to indicate that the return `value` should not be cached.
+    -- this is just a workaround for now due to this scenario:
+
+    -- when deleting a consumer/key, it is being removed from the cache
+    -- when querying for this consumer(by key), we want to return `nil` (unauthorized)
+    -- This should be cached to avoid querying the DB for every request. (DOS angle)
+
+    -- When a new consumer with this key is created we currently can't invalidate the
+    -- `nil` cache for this key as the `create` event doesn't pass the `ws_id`.
+
+    -- UPDATE: Fixed by inserting the `ws_id` to the create event. Not sure about the impact.
+
+    return nil, nil -- -1
   end
 
   return cred, nil, cred.ttl
